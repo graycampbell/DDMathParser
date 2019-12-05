@@ -25,7 +25,7 @@ extension Function {
     internal static func identity(for value: Double, from identities: [Int: Double]) -> Double? {
         guard Darwin.floor(value) == value else { return nil }
         
-        let angle = Int(Darwin.abs(value).truncatingRemainder(dividingBy: 360))
+        let angle = Int(value < 0 ? -value : value) % 360
         
         return value < 0 ? identities[360 - angle] : identities[angle]
     }
@@ -435,8 +435,7 @@ extension Function {
                     270: -1,
                     300: -Darwin.sqrt(3) / 2,
                     315: -Darwin.sqrt(2) / 2,
-                    330: -0.5,
-                    360: 0
+                    330: -0.5
                 ]
                 
                 return Function.identity(for: arg1, from: identities)
