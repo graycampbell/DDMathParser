@@ -22,6 +22,14 @@ extension Function {
         return d / Double.pi * 180
     }
     
+    internal static func identity(for value: Double from identities: [Int: Double]) -> Double? {
+        guard floor(value) == value else { return nil }
+        
+        let angle = Int(value.truncatingRemainder(dividingBy: 360))
+        
+        return identities[angle]
+    }
+    
     internal static func angle(for value: Double, from angles: [Int]) -> Int? {
         return angles.sorted(by: >).first {
             return value.truncatingRemainder(dividingBy: $0).isZero
@@ -415,17 +423,33 @@ extension Function {
         
         let arg1 = try state.evaluator.evaluate(state.arguments[0], substitutions: state.substitutions)
         
-        guard state.evaluator.angleMeasurementMode == .degrees else {
-            return Darwin.sin(arg1)
+        switch state.evaluator.angleMeasurementMode {
+            case .degrees:
+                let identities: [Int: Double] = [
+                    0: 0,
+                    30: 0.5,
+                    45: Darwin.sqrt(2) / 2,
+                    60: Darwin.sqrt(3) / 2,
+                    90: 1,
+                    120: Darwin.sqrt(3) / 2,
+                    135: Darwin.sqrt(2) / 2,
+                    150: 0.5,
+                    180: 0,
+                    210: -0.5,
+                    225: -Darwin.sqrt(2) / 2,
+                    240: -Darwin.sqrt(3) / 2,
+                    270: -1,
+                    300: -Darwin.sqrt(3) / 2,
+                    315: -Darwin.sqrt(2) / 2,
+                    330: -0.5,
+                    360: 0
+                ]
+                
+                return self.identity(for: arg1, from: identities)
+                    ?? Darwin.sin(Function._dtor(arg1, evaluator: state.evaluator))
+            case .radians:
+                return Darwin.sin(arg1)
         }
-        
-        let identities: [Int: Double] = [0: 0, 30: 0.5, 90: 1, 150: 0.5, 180: 0, 210: -0.5, 270: -1, 330: -0.5, 360: 0]
-        
-        guard let angle = Function.angle(for: arg1, from: identities.keys) else {
-            return Darwin.sin(Function._dtor(arg1, evaluator: state.evaluator))
-        }
-        
-        return identities[angle]!
     })
     
     public static let cos = Function(name: "cos", evaluator: { state throws -> Double in
