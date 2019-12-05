@@ -22,6 +22,12 @@ extension Function {
         return d / Double.pi * 180
     }
     
+    internal static func angle(for value: Double, from angles: [Int]) -> Int? {
+        return angles.sorted(by: >).first {
+            return value.truncatingRemainder(dividingBy: $0).isZero
+        }
+    }
+    
     public static let standardFunctions: Array<Function> = [
         add, subtract, multiply, divide,
         mod, negate, factorial, factorial2,
@@ -408,7 +414,18 @@ extension Function {
         guard state.arguments.count == 1 else { throw MathParserError(kind: .invalidArguments, range: state.expressionRange) }
         
         let arg1 = try state.evaluator.evaluate(state.arguments[0], substitutions: state.substitutions)
-        return Darwin.sin(Function._dtor(arg1, evaluator: state.evaluator))
+        
+        guard state.evaluator.angleMeasurementMode == .degrees else {
+            return Darwin.sin(arg1)
+        }
+        
+        let identities: [Int: Double] = [0: 0, 30: 0.5, 90: 1, 150: 0.5, 180: 0, 210: -0.5, 270: -1, 330: -0.5, 360: 0]
+        
+        guard let angle = Function.angle(for: arg1, from: identities.keys) else {
+            return Darwin.sin(Function._dtor(arg1, evaluator: state.evaluator))
+        }
+        
+        return identities[angle]!
     })
     
     public static let cos = Function(name: "cos", evaluator: { state throws -> Double in
