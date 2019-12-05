@@ -23,7 +23,7 @@ extension Function {
     }
     
     internal static func identity(for value: Double, from identities: [Int: Double]) -> Double? {
-        guard floor(value) == value else { return nil }
+        guard Darwin.floor(value) == value else { return nil }
         
         let angle = Int(value.truncatingRemainder(dividingBy: 360))
         
@@ -439,7 +439,7 @@ extension Function {
                     360: 0
                 ]
                 
-                return self.identity(for: arg1, from: identities)
+                return Function.identity(for: arg1, from: identities)
                     ?? Darwin.sin(Function._dtor(arg1, evaluator: state.evaluator))
             case .radians:
                 return Darwin.sin(arg1)
