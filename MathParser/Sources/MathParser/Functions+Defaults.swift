@@ -22,6 +22,8 @@ extension Function {
         return d / Double.pi * 180
     }
     
+    // MARK: - Trigonometic function helpers
+    
     internal static func identity(for value: Double, from identities: [Int: Double]) -> Double? {
         guard Darwin.floor(value) == value else { return nil }
         
@@ -29,6 +31,18 @@ extension Function {
         
         return value < 0 ? identities[360 - angle] : identities[angle]
     }
+    
+    internal static func sinCosTan(_ value: Double, evaluator: Evaluator, identities: [Int: Double], trigFunction: (Double) -> Double) -> Double {
+        switch evaluator.angleMeasurementMode {
+            case .degrees:
+                return Function.identity(for: value, from: identities)
+                    ?? trigFunction(Function._dtor(value, evaluator: evaluator))
+            case .radians:
+                return trigFunction(value)
+        }
+    }
+    
+    // MARK: - Standard functions
     
     public static let standardFunctions: Array<Function> = [
         add, subtract, multiply, divide,
@@ -417,46 +431,80 @@ extension Function {
         
         let arg1 = try state.evaluator.evaluate(state.arguments[0], substitutions: state.substitutions)
         
-        switch state.evaluator.angleMeasurementMode {
-            case .degrees:
-                let identities: [Int: Double] = [
-                    0: 0,
-                    30: 0.5,
-                    45: Darwin.sqrt(2) / 2,
-                    60: Darwin.sqrt(3) / 2,
-                    90: 1,
-                    120: Darwin.sqrt(3) / 2,
-                    135: Darwin.sqrt(2) / 2,
-                    150: 0.5,
-                    180: 0,
-                    210: -0.5,
-                    225: -Darwin.sqrt(2) / 2,
-                    240: -Darwin.sqrt(3) / 2,
-                    270: -1,
-                    300: -Darwin.sqrt(3) / 2,
-                    315: -Darwin.sqrt(2) / 2,
-                    330: -0.5
-                ]
-                
-                return Function.identity(for: arg1, from: identities)
-                    ?? Darwin.sin(Function._dtor(arg1, evaluator: state.evaluator))
-            case .radians:
-                return Darwin.sin(arg1)
-        }
+        let identities: [Int: Double] = [
+            0: 0,
+            30: 0.5,
+            45: Darwin.sqrt(2) / 2,
+            60: Darwin.sqrt(3) / 2,
+            90: 1,
+            120: Darwin.sqrt(3) / 2,
+            135: Darwin.sqrt(2) / 2,
+            150: 0.5,
+            180: 0,
+            210: -0.5,
+            225: -Darwin.sqrt(2) / 2,
+            240: -Darwin.sqrt(3) / 2,
+            270: -1,
+            300: -Darwin.sqrt(3) / 2,
+            315: -Darwin.sqrt(2) / 2,
+            330: -0.5
+        ]
+        
+        return Function.sinCosTan(arg1, evaluator: state.evaluator, identities: identities, trigFunction: Darwin.sin)
     })
     
     public static let cos = Function(name: "cos", evaluator: { state throws -> Double in
         guard state.arguments.count == 1 else { throw MathParserError(kind: .invalidArguments, range: state.expressionRange) }
         
         let arg1 = try state.evaluator.evaluate(state.arguments[0], substitutions: state.substitutions)
-        return Darwin.cos(Function._dtor(arg1, evaluator: state.evaluator))
+        
+        let identities: [Int: Double] = [
+            0: 1,
+            30: Darwin.sqrt(3) / 2,
+            45: Darwin.sqrt(2) / 2,
+            60: 0.5,
+            90: 0,
+            120: -0.5,
+            135: -Darwin.sqrt(2) / 2,
+            150: -Darwin.sqrt(3) / 2,
+            180: -1,
+            210: -Darwin.sqrt(3) / 2,
+            225: -Darwin.sqrt(2) / 2,
+            240: -0.5,
+            270: 0,
+            300: 0.5,
+            315: Darwin.sqrt(2) / 2,
+            330: Darwin.sqrt(3) / 2
+        ]
+        
+        return Function.sinCosTan(arg1, evaluator: state.evaluator, identities: identities, trigFunction: Darwin.cos)
     })
     
     public static let tan = Function(name: "tan", evaluator: { state throws -> Double in
         guard state.arguments.count == 1 else { throw MathParserError(kind: .invalidArguments, range: state.expressionRange) }
         
         let arg1 = try state.evaluator.evaluate(state.arguments[0], substitutions: state.substitutions)
-        return Darwin.tan(Function._dtor(arg1, evaluator: state.evaluator))
+        
+        let identities: [Int: Double] = [
+            0: 0,
+            30: Darwin.sqrt(3) / 3,
+            45: 1,
+            60: Darwin.sqrt(3),
+            90: .infinity,
+            120: -Darwin.sqrt(3),
+            135: -1,
+            150: -Darwin.sqrt(3) / 3,
+            180: 0,
+            210: Darwin.sqrt(3) / 3,
+            225: 1,
+            240: Darwin.sqrt(3),
+            270: .infinity,
+            300: -Darwin.sqrt(3),
+            315: -1,
+            330: -Darwin.sqrt(3) / 3
+        ]
+        
+        return Function.sinCosTan(arg1, evaluator: state.evaluator, identities: identities, trigFunction: Darwin.tan)
     })
     
     public static let asin = Function(names: ["asin", "sin⁻¹"], evaluator: { state throws -> Double in
