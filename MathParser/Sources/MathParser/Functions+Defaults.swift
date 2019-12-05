@@ -22,18 +22,12 @@ extension Function {
         return d / Double.pi * 180
     }
     
-    internal static func identity(for value: Double from identities: [Int: Double]) -> Double? {
+    internal static func identity(for value: Double, from identities: [Int: Double]) -> Double? {
         guard floor(value) == value else { return nil }
         
         let angle = Int(value.truncatingRemainder(dividingBy: 360))
         
         return identities[angle]
-    }
-    
-    internal static func angle(for value: Double, from angles: [Int]) -> Int? {
-        return angles.sorted(by: >).first {
-            return value.truncatingRemainder(dividingBy: $0).isZero
-        }
     }
     
     public static let standardFunctions: Array<Function> = [
