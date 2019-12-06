@@ -95,7 +95,10 @@ extension Function {
                 return Function.identity(for: value, from: identities)
                     ?? trigFunction(Function._dtor(value, evaluator: evaluator))
             case .radians:
-                return trigFunction(value)
+                let angle = value / Double.pi * 180
+                
+                return Function.identity(for: angle, from: identities)
+                    ?? trigFunction(value)
         }
     }
     
